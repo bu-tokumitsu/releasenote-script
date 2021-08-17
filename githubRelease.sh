@@ -5,11 +5,22 @@ owner="bu-tokumitsu"
 repository="releasenote-script"
 repo="${owner}/${repository}"
 
+# 実行ブランチ
+releaseBranch="main"
+branch=$(git rev-parse --abbrev-ref @)
+if [[ releaseBranch != $branch ]]; then
+    echo "
+    ${releaseBranch}ブランチで実行してください
+    "
+    exit 1
+fi
+
 # 引数1: マイルストーン名、 引数2: アプリバージョン
 milestoneName=$1
 appVersion=$2
+filterLabel="sprint-feature"
 
-if [ -z "$milestoneName" ] && [ -z "$appVersion" ]; then
+if [ -z "$milestoneName" ] || [ -z "$appVersion" ]; then
     echo "
     引数が足りません
     1:マイルストーン名 => $milestoneName
@@ -24,26 +35,26 @@ fi
 
 
 # Issues
-issuesJson=$(gh issue list -R ${repo} --milestone $milestoneName -s "closed" --json "title,url,labels")
+issuesJson=$(gh issue list -R ${repo} --search "milestone:${milestoneName}" -s "closed" --json "number,title,url,labels")
 # Issueの中でもスプリント対応（追加機能）として起票されたIssueのみをまとめる
-mainIssues=$(echo $issuesJson | jq -r 'map(select(.labels[].name == "sprint-feature")) | .[] | "* [\(.title)](\(.url))" | @text')
+mainIssues=$(echo $issuesJson | jq -r 'sort_by(.number) | map(select(.labels[].name == "'$filterLabel'")) | .[] | "* [\(.title)](\(.url))" | @text')
 # その他のIssues
-otherIssuesFilter=$(echo $issuesJson | jq -r 'map(select(.labels[].name != "sprint-feature"))')
+otherIssuesFilter=$(echo $issuesJson | jq -r 'sort_by(.number) | map(select(.labels[].name != "'$filterLabel'"))')
 otherIssuesCnt=$(echo $otherIssuesFilter | jq -r 'length')
 otherIssues=$(echo $otherIssuesFilter | jq -r '.[] | "* [\(.title)](\(.url))" | @text')
 
 # PullRequests
-prJson=$(gh pr list -R ${repo} --search "milestone:${milestoneName}" -s "closed" --json "title,url")
+prJson=$(gh pr list -R ${repo} --search "milestone:${milestoneName}" -s "closed" --json "number,title,url")
 prCnt=$(echo $prJson | jq -r 'length')
-prText=$(echo $prJson | jq -r '.[] | "* [\(.title)](\(.url))" | @text')
+prText=$(echo $prJson | jq -r 'sort_by(.number) | .[] | "* [\(.title)](\(.url))" | @text')
 
 # リリースノート
 # タイトル
 releaseTitle="${milestoneName} リリース"
 # 本文
 mainRelText="# 主な変更点\n\n${mainIssues}\n\n"
-otherRelText="<details>\n<summary>全てのIssuesを表示（${otherIssuesCnt}）</summary>\n\n${otherIssues}\n</details>\n\n"
-prRelText="<details>\n<summary>全てのPullRequestsを表示（${prCnt}）</summary>\n\n${prText}\n</details>\n\n"
+otherRelText="<details>\n<summary>その他のIssuesを表示（${otherIssuesCnt}）</summary>\n\n${otherIssues}\n</details>\n\n"
+prRelText="<details>\n<summary>PullRequestsを表示（${prCnt}）</summary>\n\n${prText}\n</details>\n\n"
 releaseBody=$(echo "${mainRelText}${otherRelText}${prRelText}")
 
 
@@ -57,7 +68,7 @@ if [ $latestTag = $appVersion ]; then
     git push -d origin $latestTag
 fi
 echo "
-${appVersion} タグを登録します
+    ${appVersion} タグを登録します
 "
 git tag -a $appVersion -m "${milestoneName}リリース"
 git push --tags
@@ -72,12 +83,12 @@ if [[ $latestReleaseInfo =~ $appVersion ]]; then
     gh release delete -R $repo $appVersion -y 
 fi
 echo "
-${releaseTitle} を登録します
+    ${releaseTitle} を登録します
 "
 resultUrl=$(gh release create -R $repo $appVersion -t "${releaseTitle}" -n "${releaseBody}")
 
 echo "
-${milestoneName} (${appVersion}) のリリース完了
+    ${milestoneName} (${appVersion}) のリリース完了
 
-${resultUrl}
+    ${resultUrl}
 "
