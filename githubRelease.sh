@@ -60,7 +60,7 @@ releaseBody=$(echo "${mainRelText}${otherRelText}${prRelText}")
 
 # タグ登録(直近のタグに同名のものがあれば削除して付け直し)
 latestTag=$(git describe --abbrev=0)
-if [ $latestTag = $appVersion ]; then
+if [ "$latestTag" = "$appVersion" ]; then
     echo "
     ${latestTag} タグが既に登録されているので付け直しの為、一度削除します
     "
