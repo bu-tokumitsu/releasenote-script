@@ -8,7 +8,7 @@ repo="${owner}/${repository}"
 # 実行ブランチ
 releaseBranch="main"
 branch=$(git rev-parse --abbrev-ref @)
-if [[ releaseBranch != $branch ]]; then
+if [ $releaseBranch != $branch ]; then
     echo "
     ${releaseBranch}ブランチで実行してください
     "
