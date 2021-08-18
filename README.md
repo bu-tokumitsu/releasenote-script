@@ -1,6 +1,15 @@
 # releasenote-script
 
-リリースノート生成スクリプト
+## 動作の際に必要なインストール
+
+バージョンはこのプロジェクトを動作確認した時のバージョンになります
+
+| tools | version |
+| --- | --- |
+| [GitHub CLI](https://cli.github.com/) | v1.9.2 | 
+| [jq](https://stedolan.github.io/jq/download/) | v1.5 |
+
+## リリースノート生成スクリプト実行
 
 ```
 ex) $ sh ./githubRelease.sh "Milestone1" v1.0.0
