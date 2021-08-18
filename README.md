@@ -1,5 +1,8 @@
 # releasenote-script
 
+[こういった感じのリリースノート](https://github.com/bu-tokumitsu/releasenote-script/releases/tag/v1.0.0)を作成するシェルスクリプトです
+
+
 ## 動作の際に必要なインストール
 
 バージョンはこのプロジェクトを動作確認した時のバージョンになります
